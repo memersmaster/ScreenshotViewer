@@ -1,10 +1,7 @@
 package io.github.lgatodu47.screenshot_viewer;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import io.github.lgatodu47.screenshot_viewer.screen.ScreenshotViewerTexts;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.MappingResolver;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -15,7 +12,7 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.client.gui.tooltip.TooltipPositioner;
 import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.render.*;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
@@ -24,7 +21,6 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.ColorHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.slf4j.Logger;
 
 import javax.imageio.ImageIO;
@@ -35,7 +31,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -64,26 +59,12 @@ public class ScreenshotViewerUtils {
         return Arrays.stream(files).filter(file -> file.isFile() && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg") || file.getName().endsWith(".jpeg"))).collect(Collectors.toList());
     }
 
-    public static void drawTexture(DrawContext context, int x, int y, int width, int height, int u, int v, int regionWidth, int regionHeight, int textureWidth, int textureHeight) {
-        int x2 = x + width;
-        int y2 = y + height;
-        float u1 = u / (float) textureWidth;
-        float u2 = (u + (float) regionWidth) / (float) textureWidth;
-        float v1 = v / (float) textureHeight;
-        float v2 = (v + (float) regionHeight) / (float) textureHeight;
-
-        Matrix4f matrix4f = context.getMatrices().peek().getPositionMatrix();
-        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
-        bufferBuilder.vertex(matrix4f, x, y, 0).texture(u1, v1);
-        bufferBuilder.vertex(matrix4f, x, y2, 0).texture(u1, v2);
-        bufferBuilder.vertex(matrix4f, x2, y2, 0).texture(u2, v2);
-        bufferBuilder.vertex(matrix4f, x2, y, 0).texture(u2, v1);
-        BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+    public static void drawTexture(DrawContext context, Identifier texture, int x, int y, int width, int height, int u, int v, int regionWidth, int regionHeight, int textureWidth, int textureHeight) {
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, texture, x, y, (float)u, (float)v, width, height, regionWidth, regionHeight, textureWidth, textureHeight);
     }
-
     @Nullable
     private static Clipboard tryGetAWTClipboard() {
-        if(MinecraftClient.IS_SYSTEM_MAC) {
+        if(Util.getOperatingSystem() == Util.OperatingSystem.OSX) {
             return null;
         }
         try {
@@ -95,7 +76,7 @@ public class ScreenshotViewerUtils {
     }
 
     public static void copyImageToClipboard(File screenshotFile) {
-        if(MinecraftClient.IS_SYSTEM_MAC) {
+        if(Util.getOperatingSystem() == Util.OperatingSystem.OSX) {
             ScreenshotViewerMacOsUtils.doCopyMacOS(screenshotFile.getAbsolutePath());
             return;
         }
@@ -126,60 +107,12 @@ public class ScreenshotViewerUtils {
         return Tooltip.wrapLines(client, text).stream().map(ColoredTooltipComponent::new).collect(Collectors.toList());
     }
 
-    private static Method DRAW_TOOLTIP;
-    private static boolean errorLogged;
-
-    public static void renderTooltip(DrawContext context, TextRenderer textRenderer, List<TooltipComponent> tooltipComponents, int posX, int posY) {
-        if(DRAW_TOOLTIP == null) {
-            try {
-                MappingResolver mappingResolver = FabricLoader.getInstance().getMappingResolver();
-                String methodName = mappingResolver.mapMethodName("intermediary", "net.minecraft.class_332", "method_51435", "(Lnet/minecraft/class_327;Ljava/util/List;IILnet/minecraft/class_8000;Lnet/minecraft/class_2960;)V");
-                DRAW_TOOLTIP = DrawContext.class.getDeclaredMethod(methodName, TextRenderer.class, List.class, int.class, int.class, TooltipPositioner.class, Identifier.class);
-            } catch (NoSuchMethodException e) {
-                if(!errorLogged) {
-                    LOGGER.error("Failed to render Screenshot Viewer tooltip", e);
-                    errorLogged = true;
-                }
-                return;
-            }
-            DRAW_TOOLTIP.setAccessible(true);
-        }
-        try {
-            DRAW_TOOLTIP.invoke(context, textRenderer, tooltipComponents, posX, posY, HoveredTooltipPositioner.INSTANCE, null);
-        } catch (Exception e) {
-            if(!errorLogged) {
-                LOGGER.error("Failed to render Screenshot Viewer tooltip", e);
-                errorLogged = true;
-            }
-        }
+    public static void renderTooltip(DrawContext context, TextRenderer textRenderer, List<OrderedText> text, int posX, int posY) {
+        context.drawTooltip(textRenderer, text, HoveredTooltipPositioner.INSTANCE, posX, posY, false);
     }
 
-    private static Method RENDER_WIDGET;
-    private static boolean errorLogged1;
-
     public static void renderWidget(ClickableWidget widget, DrawContext context, int mouseX, int mouseY, float delta) {
-        if(RENDER_WIDGET == null) {
-            try {
-                MappingResolver mappingResolver = FabricLoader.getInstance().getMappingResolver();
-                String methodName = mappingResolver.mapMethodName("intermediary", "net.minecraft.class_339", "method_48579", "(Lnet/minecraft/class_332;IIF)V");
-                RENDER_WIDGET = ClickableWidget.class.getDeclaredMethod(methodName, DrawContext.class, int.class, int.class, float.class);
-            } catch (NoSuchMethodException e) {
-                if(!errorLogged1) {
-                    LOGGER.error("Failed to render widget", e);
-                    errorLogged1 = true;
-                }
-                return;
-            }
-            RENDER_WIDGET.setAccessible(true);
-        }
-        try {
-            RENDER_WIDGET.invoke(widget, context, mouseX, mouseY, delta);
-        } catch (Exception e) {
-            if(!errorLogged1) {
-                LOGGER.error("Failed to render widget", e);
-                errorLogged1 = true;
-            }
-        }
+        widget.render(context, mouseX, mouseY, delta);
     }
 
     public static void forEachDrawable(Screen screen, Consumer<Drawable> renderer) {
@@ -208,15 +141,8 @@ public class ScreenshotViewerUtils {
         }
 
         @Override
-        public void drawText(TextRenderer textRenderer, int x, int y, Matrix4f matrix, VertexConsumerProvider.Immediate vertexConsumers) {
-            float[] colors = RenderSystem.getShaderColor();
-            if(colors.length != 4) {
-                colors = new float[]{0, 0, 0, 0};
-            }
-            // game tweaks the alpha value for some reason (see TextRenderer#tweakTransparency)
-            int alpha = Math.max((int) (colors[3] * 255), 5);
-            int textColor = ColorHelper.getArgb(alpha, (int) (colors[0] * 255), (int) (colors[1] * 255), (int) (colors[2] * 255));
-            textRenderer.draw(this.text, x, y, textColor, true, matrix, vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, 0xF000F0);
+        public void drawText(DrawContext context, TextRenderer textRenderer, int x, int y) {
+            context.drawText(textRenderer, this.text, x, y, -1, true);
         }
     }
 
