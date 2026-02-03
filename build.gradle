@@ -5,12 +5,11 @@ plugins {
     id 'maven-publish'
 }
 
-apply from: ".gradle/build.gradle"
-
 version = project.mod_version
 group = project.maven_group
 
 repositories {
+    mavenCentral()
     maven {
         name "Sonatype Maven"
         url "https://s01.oss.sonatype.org/content/repositories/releases"
@@ -69,7 +68,7 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
+        rename { "${it}_${project.archives_base_name}" }
     }
 
     duplicatesStrategy(DuplicatesStrategy.INCLUDE)
