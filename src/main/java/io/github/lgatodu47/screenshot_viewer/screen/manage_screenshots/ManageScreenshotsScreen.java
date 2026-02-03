@@ -1,14 +1,10 @@
 package io.github.lgatodu47.screenshot_viewer.screen.manage_screenshots;
 
 import com.mojang.logging.LogUtils;
-import io.github.lgatodu47.catconfig.CatConfig;
-import io.github.lgatodu47.catconfigmc.screen.ConfigListener;
 import io.github.lgatodu47.screenshot_viewer.ScreenshotThumbnailManager;
 import io.github.lgatodu47.screenshot_viewer.ScreenshotViewer;
 import io.github.lgatodu47.screenshot_viewer.ScreenshotViewerUtils;
-import io.github.lgatodu47.screenshot_viewer.config.ScreenshotViewerOptions;
 import io.github.lgatodu47.screenshot_viewer.screen.IconButtonWidget;
-import io.github.lgatodu47.screenshot_viewer.screen.ScreenshotViewerConfigScreen;
 import io.github.lgatodu47.screenshot_viewer.screen.ScreenshotViewerTexts;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -36,9 +32,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class ManageScreenshotsScreen extends Screen implements ConfigListener, OldParentElementMethods {
-    // Package-private config instance accessible in all the package classes
-    static final CatConfig CONFIG = ScreenshotViewer.getInstance().getConfig();
+public class ManageScreenshotsScreen extends Screen implements OldParentElementMethods {
+    // Package-private instance accessible in all the package classes
     static final ScreenshotThumbnailManager THUMBNAILS = ScreenshotViewer.getInstance().getThumbnailManager();
     static final Logger LOGGER = LogUtils.getLogger();
 
@@ -67,7 +62,7 @@ public class ManageScreenshotsScreen extends Screen implements ConfigListener, O
         this.parent = parent;
         this.enlargedScreenshot = new EnlargedScreenshotScreen(this::showScreenshotProperties);
         this.screenshotProperties = new ScreenshotPropertiesMenu(this::client);
-        this.enlargeAnimation = CONFIG.getOrFallback(ScreenshotViewerOptions.ENABLE_SCREENSHOT_ENLARGEMENT_ANIMATION, true);
+        this.enlargeAnimation = true;
     }
 
     public ManageScreenshotsScreen(Screen parent, @Nullable File enlargedScreenshotFile) {
@@ -123,10 +118,6 @@ public class ManageScreenshotsScreen extends Screen implements ConfigListener, O
         final int btnSize = 20;
         final int bigBtnWidth = 200;
 
-        // Config Button
-        addDrawableChild(new ExtendedTexturedButtonWidget(2, 2, btnSize, btnSize, CONFIG_ICON, button -> {
-            client.setScreen(new ScreenshotViewerConfigScreen(this));
-        }, ScreenshotViewerTexts.CONFIG, ScreenshotViewerTexts.CONFIG).offsetTooltip());
         // Order Button
         addDrawableChild(new ExtendedTexturedButtonWidget(spacing, btnY, btnSize, btnSize, null, button -> {
             if(list != null) {
@@ -145,26 +136,22 @@ public class ManageScreenshotsScreen extends Screen implements ConfigListener, O
         });
         // Screenshot Folder Button
         addDrawableChild(new ExtendedTexturedButtonWidget(spacing * 2 + btnSize, btnY, btnSize, btnSize, OPEN_FOLDER_ICON, btn -> {
-            Util.getOperatingSystem().open(CONFIG.getOrFallback(ScreenshotViewerOptions.SCREENSHOTS_FOLDER, (Supplier<? extends File>) ScreenshotViewerUtils::getVanillaScreenshotsFolder));
+            Util.getOperatingSystem().open(ScreenshotViewerUtils.getVanillaScreenshotsFolder());
         }, ScreenshotViewerTexts.OPEN_FOLDER, ScreenshotViewerTexts.OPEN_FOLDER));
         // Done/Delete n screenshots Button
         addDrawableChild(new ExtendedButtonWidget((width - bigBtnWidth) / 2, btnY, bigBtnWidth, btnHeight, ScreenTexts.DONE, button -> {
             List<ScreenshotWidget> toDelete = list.deletionList();
             if(fastDelete && !toDelete.isEmpty()) {
-                if(CONFIG.getOrFallback(ScreenshotViewerOptions.PROMPT_WHEN_DELETING_SCREENSHOT, true)) {
-                    setDialogScreen(new ConfirmDeletionScreen(value -> {
-                        if(value) {
-                            toDelete.forEach(ScreenshotWidget::deleteScreenshot);
-                        } else {
-                            list.resetDeleteSelection();
-                        }
-                        setDialogScreen(null);
-                        }, Text.translatable("screen." + ScreenshotViewer.MODID + ".screenshot_manager.delete_n_screenshots", toDelete.size()),
-                            toDelete.size() == 1 ? ScreenshotViewerTexts.DELETE_WARNING_MESSAGE : ScreenshotViewerTexts.DELETE_MULTIPLE_WARNING_MESSAGE)
-                    );
-                } else {
-                    toDelete.forEach(ScreenshotWidget::deleteScreenshot);
-                }
+                setDialogScreen(new ConfirmDeletionScreen(value -> {
+                    if(value) {
+                        toDelete.forEach(ScreenshotWidget::deleteScreenshot);
+                    } else {
+                        list.resetDeleteSelection();
+                    }
+                    setDialogScreen(null);
+                    }, Text.translatable("screen." + ScreenshotViewer.MODID + ".screenshot_manager.delete_n_screenshots", toDelete.size()),
+                        toDelete.size() == 1 ? ScreenshotViewerTexts.DELETE_WARNING_MESSAGE : ScreenshotViewerTexts.DELETE_MULTIPLE_WARNING_MESSAGE)
+                );
                 this.fastDelete = false;
                 return;
             }
@@ -446,11 +433,6 @@ public class ManageScreenshotsScreen extends Screen implements ConfigListener, O
         list.close();
     }
 
-    @Override // From ConfigListener
-    public void configUpdated() {
-        this.list.onConfigUpdate();
-        this.enlargeAnimation = CONFIG.getOrFallback(ScreenshotViewerOptions.ENABLE_SCREENSHOT_ENLARGEMENT_ANIMATION, true);
-    }
 
     public static class ExtendedButtonWidget extends ButtonWidget.Text implements CustomHoverState {
         public ExtendedButtonWidget(int x, int y, int width, int height, net.minecraft.text.Text message, PressAction onPress) {

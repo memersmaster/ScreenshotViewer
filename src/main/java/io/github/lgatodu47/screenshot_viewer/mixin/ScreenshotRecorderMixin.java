@@ -1,7 +1,5 @@
 package io.github.lgatodu47.screenshot_viewer.mixin;
 
-import io.github.lgatodu47.screenshot_viewer.ScreenshotViewer;
-import io.github.lgatodu47.screenshot_viewer.config.ScreenshotViewerOptions;
 import io.github.lgatodu47.screenshot_viewer.screen.ScreenshotViewerTexts;
 import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.client.gl.Framebuffer;
@@ -24,8 +22,8 @@ public class ScreenshotRecorderMixin {
     )
     private static Consumer<Text> screenshot_viewer$wrapMessageReceiver(Consumer<Text> messageReceiver, File gameDirectory, String fileName, Framebuffer framebuffer, int downscaleFactor) {
         return message -> {
-            if (ScreenshotViewer.getInstance().getConfig().getOrFallback(ScreenshotViewerOptions.REDIRECT_SCREENSHOT_CHAT_LINKS, false)
-                    && message instanceof MutableText mutable) {
+            // Hardcoded: false
+            if (false && message instanceof MutableText mutable) {
                 mutable.styled(style -> style.withHoverEvent(new HoverEvent.ShowText(ScreenshotViewerTexts.REDIRECT_TO_SCREENSHOT_MANAGER)));
             }
             messageReceiver.accept(message);

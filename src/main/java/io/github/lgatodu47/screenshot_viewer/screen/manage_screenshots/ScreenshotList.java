@@ -1,9 +1,7 @@
 package io.github.lgatodu47.screenshot_viewer.screen.manage_screenshots;
 
 import io.github.lgatodu47.screenshot_viewer.ScreenshotViewerUtils;
-import io.github.lgatodu47.screenshot_viewer.config.ScreenshotListOrder;
-import io.github.lgatodu47.screenshot_viewer.config.ScreenshotViewerOptions;
-import io.github.lgatodu47.screenshot_viewer.config.VisibilityState;
+import io.github.lgatodu47.screenshot_viewer.VisibilityState;
 import io.github.lgatodu47.screenshot_viewer.screen.ScreenshotViewerTexts;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.*;
@@ -42,12 +40,12 @@ final class ScreenshotList extends AbstractParentElement implements Drawable, Se
         this.y = y;
         this.width = width;
         this.height = height;
-        this.scrollSpeedFactor = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.SCREEN_SCROLL_SPEED, 10);
-        this.screenshotsPerRow = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.INITIAL_SCREENSHOT_AMOUNT_PER_ROW, 4);
-        this.invertedOrder = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.DEFAULT_LIST_ORDER, ScreenshotListOrder.ASCENDING).isInverted();
-        this.screenshotsFolder = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.SCREENSHOTS_FOLDER, (Supplier<? extends File>) ScreenshotViewerUtils::getVanillaScreenshotsFolder);
-        this.invertedScroll = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.INVERT_ZOOM_DIRECTION, false);
-        this.namesHidden = ManageScreenshotsScreen.CONFIG.get(ScreenshotViewerOptions.SCREENSHOT_ELEMENT_TEXT_VISIBILITY).filter(VisibilityState.HIDDEN::equals).isPresent();
+        this.scrollSpeedFactor = 10;
+        this.screenshotsPerRow = 4;
+        this.invertedOrder = false;
+        this.screenshotsFolder = ScreenshotViewerUtils.getVanillaScreenshotsFolder();
+        this.invertedScroll = false;
+        this.namesHidden = false;
         updateVariables();
     }
 
@@ -56,24 +54,6 @@ final class ScreenshotList extends AbstractParentElement implements Drawable, Se
     void updateSize(int width, int height) {
         this.width = width;
         this.height = height;
-    }
-
-    void onConfigUpdate() {
-        this.scrollSpeedFactor = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.SCREEN_SCROLL_SPEED, 10);
-        this.screenshotsPerRow = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.INITIAL_SCREENSHOT_AMOUNT_PER_ROW, 4);
-        this.invertedScroll = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.INVERT_ZOOM_DIRECTION, false);
-        this.namesHidden = ManageScreenshotsScreen.CONFIG.get(ScreenshotViewerOptions.SCREENSHOT_ELEMENT_TEXT_VISIBILITY).filter(VisibilityState.HIDDEN::equals).isPresent();
-        File currentScreenshotsFolder = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.SCREENSHOTS_FOLDER, (Supplier<? extends File>) ScreenshotViewerUtils::getVanillaScreenshotsFolder);
-        if(screenshotsFolder != currentScreenshotsFolder) {
-            screenshotsFolder = currentScreenshotsFolder;
-            init();
-            return;
-        }
-        if(invertedOrder != ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.DEFAULT_LIST_ORDER, ScreenshotListOrder.ASCENDING).isInverted()) {
-            invertOrder();
-            return;
-        }
-        updateChildren(true);
     }
 
     /**
@@ -145,9 +125,6 @@ final class ScreenshotList extends AbstractParentElement implements Drawable, Se
             widget.updateBaseY(childY);
             widget.setWidth(childWidth);
             widget.setHeight(childHeight);
-            if(configUpdated) {
-                widget.onConfigUpdate();
-            }
 
             if (xOff == maxXOff) {
                 xOff = 0;

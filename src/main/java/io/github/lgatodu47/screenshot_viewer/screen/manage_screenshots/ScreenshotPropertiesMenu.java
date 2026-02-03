@@ -1,7 +1,6 @@
 package io.github.lgatodu47.screenshot_viewer.screen.manage_screenshots;
 
 import io.github.lgatodu47.screenshot_viewer.ScreenshotViewer;
-import io.github.lgatodu47.screenshot_viewer.config.ScreenshotViewerOptions;
 import io.github.lgatodu47.screenshot_viewer.screen.IconButtonWidget;
 import io.github.lgatodu47.screenshot_viewer.screen.ScreenshotViewerTexts;
 import net.minecraft.client.MinecraftClient;
@@ -159,7 +158,7 @@ class ScreenshotPropertiesMenu extends AbstractParentElement implements Drawable
                 Identifier.of(ScreenshotViewer.MODID, "textures/gui/sprites/widget/properties_button_hovered.png")
         );
 
-        private boolean renderWide = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.RENDER_WIDE_PROPERTIES_BUTTON, true);
+        private boolean renderWide = true;
 
         public Button(Identifier texture, net.minecraft.text.Text title, PressAction pressAction) {
             super(0, 0, BUTTON_SIZE, BUTTON_SIZE, title, texture, pressAction);
@@ -167,7 +166,7 @@ class ScreenshotPropertiesMenu extends AbstractParentElement implements Drawable
 
         @Override
         public void setDimensionsAndPosition(int width, int height, int x, int y) {
-            this.renderWide = ManageScreenshotsScreen.CONFIG.getOrFallback(ScreenshotViewerOptions.RENDER_WIDE_PROPERTIES_BUTTON, true);
+            this.renderWide = true;
             // provided width is for wide while current width is for squared.
             super.setDimensionsAndPosition(renderWide ? width : getWidth(), height, x, y);
         }
