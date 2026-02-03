@@ -1,4 +1,4 @@
-package io.github.lgatodu47.screenshot_viewer.config;
+package io.github.lgatodu47.screenshot_viewer;
 
 public enum CompressionRatio {
     NONE,

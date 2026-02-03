@@ -28,12 +28,7 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
 
-    def catConfigMc = "io.github.lgatodu47:catconfig-mc:${project.catconfigmc_version}"
-    modImplementation catConfigMc
-    include catConfigMc
-
     implementation "ca.weblite:java-objc-bridge:1.0.0"
-    implementation 'io.github.lgatodu47:catconfig:0.3.0'
 }
 
 processResources {

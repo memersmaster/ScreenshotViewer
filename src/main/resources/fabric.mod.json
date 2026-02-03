@@ -29,9 +29,6 @@
   "entrypoints": {
     "client": [
       "io.github.lgatodu47.screenshot_viewer.ScreenshotViewer"
-    ],
-    "modmenu": [
-      "io.github.lgatodu47.screenshot_viewer.ScreenshotViewerModMenuApi"
     ]
   },
   "mixins": [

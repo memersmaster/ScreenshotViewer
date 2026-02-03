@@ -1,10 +1,6 @@
 package io.github.lgatodu47.screenshot_viewer;
 
 import com.mojang.logging.LogUtils;
-import io.github.lgatodu47.catconfig.CatConfig;
-import io.github.lgatodu47.catconfigmc.screen.ConfigListener;
-import io.github.lgatodu47.screenshot_viewer.config.CompressionRatio;
-import io.github.lgatodu47.screenshot_viewer.config.ScreenshotViewerOptions;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -24,39 +20,31 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
-public class ScreenshotThumbnailManager implements ConfigListener {
+public class ScreenshotThumbnailManager {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private final CatConfig config;
     private final Executor executor;
     private final Map<File, CompletableFuture<File>> screenshotToThumbnail = new HashMap<>();
     private File screenshotFolder, thumbnailFolder;
     private CompressionRatio ratio = CompressionRatio.NONE;
 
-    public ScreenshotThumbnailManager(CatConfig config) {
-        this.config = config;
+    public ScreenshotThumbnailManager() {
         this.executor = Util.getMainWorkerExecutor();
-        configUpdated();
+        init();
     }
 
-    @Override
-    public void configUpdated() {
-        File screenshotFolder = config.getOrFallback(ScreenshotViewerOptions.SCREENSHOTS_FOLDER, (Supplier<? extends File>) ScreenshotViewerUtils::getVanillaScreenshotsFolder);
-        File thumbnailFolder = config.getOrFallback(ScreenshotViewerOptions.THUMBNAIL_FOLDER, (Supplier<? extends File>) ScreenshotViewerUtils::getDefaultThumbnailFolder);
-        CompressionRatio ratio = config.getOrFallback(ScreenshotViewerOptions.COMPRESSION_RATIO, CompressionRatio.NONE);
-        if(screenshotFolder == this.screenshotFolder && thumbnailFolder == this.thumbnailFolder && ratio == this.ratio) {
-            return;
-        }
+    private void init() {
+        File screenshotFolder = ScreenshotViewerUtils.getVanillaScreenshotsFolder();
+        File thumbnailFolder = ScreenshotViewerUtils.getDefaultThumbnailFolder();
+        CompressionRatio ratio = CompressionRatio.NONE;
         if(screenshotFolder.equals(thumbnailFolder)) {
             LOGGER.warn("Screenshots and thumbnails cannot be stored in the same folder: `{}`! Please disable compression by setting the compression ratio to `NONE`!", screenshotFolder);
             thumbnailFolder = new File(screenshotFolder, "thumbnails");
-            config.put(ScreenshotViewerOptions.THUMBNAIL_FOLDER, thumbnailFolder);
         }
-        boolean regenerate = ratio != this.ratio;
         this.screenshotFolder = screenshotFolder;
         this.thumbnailFolder = thumbnailFolder;
         this.ratio = ratio;
-        reloadThumbnails(regenerate);
+        reloadThumbnails(false);
     }
 
     /**

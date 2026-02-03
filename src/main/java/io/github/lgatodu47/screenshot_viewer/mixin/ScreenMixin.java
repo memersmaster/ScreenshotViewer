@@ -1,7 +1,5 @@
 package io.github.lgatodu47.screenshot_viewer.mixin;
 
-import io.github.lgatodu47.screenshot_viewer.ScreenshotViewer;
-import io.github.lgatodu47.screenshot_viewer.config.ScreenshotViewerOptions;
 import io.github.lgatodu47.screenshot_viewer.screen.manage_screenshots.ManageScreenshotsScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -18,7 +16,8 @@ import java.io.File;
 public abstract class ScreenMixin {
     @Inject(method = "handleClickEvent", at = @At("HEAD"), cancellable = true)
     private static void screenshot_viewer$inject_handleClickEvent(ClickEvent clickEvent, MinecraftClient client, @Nullable Screen screenAfterRun, CallbackInfo ci) {
-        if (!ScreenshotViewer.getInstance().getConfig().getOrFallback(ScreenshotViewerOptions.REDIRECT_SCREENSHOT_CHAT_LINKS, false)) {
+        // Hardcoded: false
+        if (true) {
             return;
         }
         if (!(clickEvent instanceof ClickEvent.OpenFile openFile)) {

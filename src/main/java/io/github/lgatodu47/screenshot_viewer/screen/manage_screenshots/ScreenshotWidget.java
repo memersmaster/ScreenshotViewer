@@ -1,9 +1,9 @@
 package io.github.lgatodu47.screenshot_viewer.screen.manage_screenshots;
 
 import io.github.lgatodu47.screenshot_viewer.ScreenshotViewer;
+
 import io.github.lgatodu47.screenshot_viewer.ScreenshotViewerUtils;
-import io.github.lgatodu47.screenshot_viewer.config.ScreenshotViewerOptions;
-import io.github.lgatodu47.screenshot_viewer.config.VisibilityState;
+import io.github.lgatodu47.screenshot_viewer.VisibilityState;
 import io.github.lgatodu47.screenshot_viewer.screen.ScreenshotViewerTexts;
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import net.minecraft.client.MinecraftClient;
@@ -64,7 +64,12 @@ final class ScreenshotWidget extends ClickableWidget implements AutoCloseable, S
             this.screenshotImage.file = CompletableFuture.completedFuture(screenshotFile);
             this.thumbnailImage.load(thumbnailFile);
         }, () -> this.screenshotImage.load(CompletableFuture.completedFuture(screenshotFile)));
-        onConfigUpdate();
+        this.textVisibility = VisibilityState.VISIBLE;
+        this.backgroundOpacityPercentage = 1.0f;
+        this.textColor = 0xFFFFFF;
+        this.renderTextShadow = true;
+        this.promptOnDelete = true;
+        this.hintTooltip = Tooltip.wrapLines(client, ScreenshotViewerTexts.translatable("tooltip", "menu_hint").formatted(Formatting.GRAY));
     }
 
     void updateBaseY(int baseY) {
@@ -82,14 +87,6 @@ final class ScreenshotWidget extends ClickableWidget implements AutoCloseable, S
         ctx.removeEntry(this);
     }
 
-    void onConfigUpdate() {
-        this.textVisibility = CONFIG.getOrFallback(ScreenshotViewerOptions.SCREENSHOT_ELEMENT_TEXT_VISIBILITY, VisibilityState.VISIBLE);
-        this.backgroundOpacityPercentage = CONFIG.getOrFallback(ScreenshotViewerOptions.SCREENSHOT_ELEMENT_BACKGROUND_OPACITY, 100) / 100f;
-        this.textColor = CONFIG.get(ScreenshotViewerOptions.SCREENSHOT_ELEMENT_TEXT_COLOR).map(TextColor::getRgb).orElse(0xFFFFFF);
-        this.renderTextShadow = CONFIG.getOrFallback(ScreenshotViewerOptions.RENDER_SCREENSHOT_ELEMENT_FONT_SHADOW, true);
-        this.promptOnDelete = CONFIG.getOrFallback(ScreenshotViewerOptions.PROMPT_WHEN_DELETING_SCREENSHOT, true);
-        this.hintTooltip = CONFIG.getOrFallback(ScreenshotViewerOptions.DISPLAY_HINT_TOOLTIP, false) ? Tooltip.wrapLines(client, ScreenshotViewerTexts.translatable("tooltip", "menu_hint").formatted(Formatting.GRAY)) : List.of();
-    }
 
     void updateHoverState(int mouseX, int mouseY, int viewportY, int viewportBottom, boolean updateHoverState) {
         this.hovered = updateHoverState && (mouseX >= this.getX() && mouseY >= Math.max(this.getY(), viewportY) && mouseX < this.getX() + this.width && mouseY < Math.min(this.getY() + this.height, viewportBottom));
